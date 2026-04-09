@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 
 // --- DATA SOAL (30 SOAL KERAJAAN SIAK) ---
+// Setiap soal single akan ditambahkan opsi ke-5 (E) secara otomatis saat kuis dimulai
 const questionsData = [
   {
     id: 1,
@@ -428,7 +429,7 @@ export default function App() {
   const GOOGLE_SHEET_URL =
     'https://script.google.com/macros/s/AKfycbw4BsaRGEKDhLitVhXWxH05KSPMJRQAegRvMm363pRWGwwq6oP-VhvPa_lIy-GC7Kr97A/exec';
 
-  // Helper untuk mendapatkan abjad pilihan ganda
+  // Helper untuk mendapatkan abjad pilihan ganda (A, B, C, D, E, ...)
   const getLabel = (idx) => String.fromCharCode(65 + idx);
 
   // Fungsi untuk mengacak urutan array (algoritma Fisher-Yates)
@@ -441,16 +442,34 @@ export default function App() {
     return shuffled;
   };
 
+  // Fungsi untuk menambahkan opsi kelima (E) pada setiap soal tipe single
+  const addFifthOption = (question) => {
+    if (question.type === 'single') {
+      // Hanya tambahkan jika belum memiliki opsi ke-5 (indeks 4)
+      if (question.options.length === 4) {
+        return {
+          ...question,
+          options: [...question.options, 'E. Tidak ada jawaban yang benar'],
+          // Jawaban benar tetap pada indeks asli (0-3), opsi E otomatis salah
+        };
+      }
+    }
+    return question;
+  };
+
   const handleStart = (e) => {
     e.preventDefault();
     if (student.name && student.nis) {
       setErrorMsg('');
 
-      // Ambil seluruh soal dari dataKerajaan Siak
-      const poolSoal = questionsData;
+      // Ambil seluruh soal dari data Kerajaan Siak
+      let poolSoal = questionsData;
 
-      // Acak array soal dan tampilkan SEMUA 30 SOAL (gunakan slice(0, 30) atau biarkan penuh)
-      const randomSoal = shuffleArray(poolSoal).slice(0, 30);
+      // Acak array soal dan tampilkan SEMUA 30 SOAL
+      let randomSoal = shuffleArray(poolSoal).slice(0, 30);
+
+      // Tambahkan opsi kelima (E) untuk setiap soal tipe single
+      randomSoal = randomSoal.map(addFifthOption);
 
       setActiveQuestions(randomSoal);
       setStep('quiz');
@@ -819,7 +838,7 @@ export default function App() {
                         <th className="p-3 font-semibold text-slate-700 text-center w-1/5">
                           Tidak Tepat
                         </th>
-                      </tr>
+                       </tr>
                     </thead>
                     <tbody>
                       {q.statements.map((stmt, i) => (
